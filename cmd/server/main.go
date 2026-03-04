@@ -36,21 +36,30 @@ func main() {
 	})
 	authHandler := auth.NewHandler(authService)
 
-	http.HandleFunc("/run", executor.RunGoidaHandler)
-	http.HandleFunc("/auth/register", authHandler.Register)
-	http.HandleFunc("/auth/login", authHandler.Login)
-	http.HandleFunc("/auth/refresh", authHandler.Refresh)
-
 	port := ":8080"
 	log.Printf("Server listening on %s", port)
 
-	if err := http.ListenAndServe(port, nil); err != nil {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/run", executor.RunGoidaHandler)
+	mux.HandleFunc("/auth/register", authHandler.Register)
+	mux.HandleFunc("/auth/login", authHandler.Login)
+	mux.HandleFunc("/auth/refresh", authHandler.Refresh)
+	server := http.Server{
+		Addr:              "0.0.0.0:8080",
+		Handler:           mux,
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+		IdleTimeout:       5 * time.Second,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func openDB() (*sql.DB, error) {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := mustEnv("DATABASE_URL")
 	if dsn == "" {
 		return nil, errors.New("DATABASE_URL is required")
 	}

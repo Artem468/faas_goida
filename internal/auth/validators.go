@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+var hasLetter = regexp.MustCompile(`[a-zA-Z]`)
+var hasDigit = regexp.MustCompile(`[0-9]`)
+var hasSpecial = regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]`)
+
 func validEmail(email string) bool {
 	if len(email) < 3 {
 		return false
@@ -20,9 +24,9 @@ func validPassword(password string) bool {
 		return false
 	}
 
-	hasLetter := regexp.MustCompile(`[a-zA-Z]`).MatchString(password)
-	hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
-	hasSpecial := regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]`).MatchString(password)
+	_hasLetter := hasLetter.MatchString(password)
+	_hasDigit := hasDigit.MatchString(password)
+	_hasSpecial := hasSpecial.MatchString(password)
 
-	return hasLetter && hasDigit && hasSpecial
+	return _hasLetter && _hasDigit && _hasSpecial
 }
