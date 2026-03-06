@@ -10,6 +10,18 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./internal/db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
 
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: rustfs
+    command: /data
+    env_file:
+      - .env
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs_data:/data
+
   app:
     container_name: app
     build: .
@@ -19,7 +31,9 @@ services:
       - .env
     depends_on:
       - db
+      - rustfs
     restart: always
 
 volumes:
   db_data:
+  rustfs_data:
