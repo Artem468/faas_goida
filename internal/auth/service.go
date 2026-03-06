@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -21,6 +22,7 @@ type Service interface {
 	Register(ctx context.Context, email, password string) (user.User, error)
 	Login(ctx context.Context, email, password string) (TokenPair, error)
 	Refresh(ctx context.Context, refreshToken string) (TokenPair, error)
+	AuthMiddleware(next http.Handler) http.Handler
 }
 
 type service struct {

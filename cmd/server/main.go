@@ -40,7 +40,8 @@ func main() {
 	log.Printf("Server listening on %s", port)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/run", executor.RunGoidaHandler)
+	mux.Handle("/run", authService.AuthMiddleware(http.HandlerFunc(executor.RunGoidaHandler)))
+
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/refresh", authHandler.Refresh)
