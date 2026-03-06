@@ -16,6 +16,10 @@ services:
     command: /data
     env_file:
       - .env
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
     ports:
       - "9000:9000"
       - "9001:9001"

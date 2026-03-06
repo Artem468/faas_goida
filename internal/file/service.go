@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"io"
+	"time"
 )
 
 type Storage interface {
 	Upload(ctx context.Context, projectID int64, fileName string, body io.Reader, size int64, contentType string) (key string, url string, err error)
 	Delete(ctx context.Context, key string) error
+	PresignGet(ctx context.Context, key string, ttl time.Duration) (string, error)
 }
 
 type Service interface {
@@ -64,15 +66,34 @@ func (s *service) Create(ctx context.Context, userID int64, req CreateRequest) (
 		return File{}, err
 	}
 
+	if err := s.attachPresignedURL(ctx, &created); err != nil {
+		return File{}, err
+	}
 	return created, nil
 }
 
 func (s *service) ListByProject(ctx context.Context, projectID, userID int64) ([]File, error) {
-	return s.repo.ListByProject(ctx, projectID, userID)
+	files, err := s.repo.ListByProject(ctx, projectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range files {
+		if err := s.attachPresignedURL(ctx, &files[i]); err != nil {
+			return nil, err
+		}
+	}
+	return files, nil
 }
 
 func (s *service) GetByID(ctx context.Context, id, projectID, userID int64) (File, error) {
-	return s.repo.GetByID(ctx, id, projectID, userID)
+	f, err := s.repo.GetByID(ctx, id, projectID, userID)
+	if err != nil {
+		return File{}, err
+	}
+	if err := s.attachPresignedURL(ctx, &f); err != nil {
+		return File{}, err
+	}
+	return f, nil
 }
 
 func (s *service) Update(ctx context.Context, userID int64, req UpdateRequest) (File, error) {
@@ -115,6 +136,9 @@ func (s *service) Update(ctx context.Context, userID int64, req UpdateRequest) (
 		}
 	}
 
+	if err := s.attachPresignedURL(ctx, &result); err != nil {
+		return File{}, err
+	}
 	return result, nil
 }
 
@@ -139,3 +163,15 @@ func (s *service) Delete(ctx context.Context, id, projectID, userID int64) error
 }
 
 var ErrInvalidMultipart = errors.New("invalid multipart request")
+
+func (s *service) attachPresignedURL(ctx context.Context, f *File) error {
+	if f.S3Key == "" {
+		return nil
+	}
+	url, err := s.storage.PresignGet(ctx, f.S3Key, 15*time.Minute)
+	if err != nil {
+		return err
+	}
+	f.S3URL = url
+	return nil
+}
