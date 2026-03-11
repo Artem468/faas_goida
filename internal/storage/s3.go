@@ -104,6 +104,22 @@ func (s *S3) Delete(ctx context.Context, key string) error {
 	return s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{})
 }
 
+func (s *S3) Download(ctx context.Context, key string) ([]byte, error) {
+	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = obj.Close()
+	}()
+
+	data, err := io.ReadAll(obj)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (s *S3) PresignGet(ctx context.Context, key string, ttl time.Duration) (string, error) {
 	u, err := s.presignClient.PresignedGetObject(ctx, s.bucket, key, ttl, neturl.Values{})
 	if err != nil {

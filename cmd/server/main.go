@@ -63,12 +63,14 @@ func main() {
 	}
 	fileService := file.NewService(fileRepo, s3Storage)
 	fileHandler := file.NewHandler(fileService)
+	execCache := executor.NewCache()
+	execHandler := executor.NewHandler(fileRepo, s3Storage, execCache)
 
 	port := ":8080"
 	log.Printf("Server listening on %s", port)
 
 	mux := http.NewServeMux()
-	mux.Handle("/run", authService.AuthMiddleware(http.HandlerFunc(executor.RunGoidaHandler)))
+	mux.Handle("/call", authService.AuthMiddleware(http.HandlerFunc(execHandler.Call)))
 
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
