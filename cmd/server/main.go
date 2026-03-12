@@ -44,8 +44,6 @@ func main() {
 	authHandler := auth.NewHandler(authService)
 
 	projectRepo := project.NewRepository(db)
-	projectHandler := project.NewHandler(projectRepo)
-
 	fileRepo := file.NewRepository(db)
 	s3Storage, err := storage.NewS3(storage.Config{
 		Endpoint:        mustEnv("S3_ENDPOINT"),
@@ -63,6 +61,7 @@ func main() {
 	}
 	fileService := file.NewService(fileRepo, s3Storage)
 	fileHandler := file.NewHandler(fileService)
+	projectHandler := project.NewHandler(projectRepo, fileService)
 	execCache := executor.NewCache()
 	execHandler := executor.NewHandler(fileRepo, s3Storage, execCache)
 

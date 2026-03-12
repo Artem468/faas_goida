@@ -19,6 +19,7 @@ type Service interface {
 	GetByID(ctx context.Context, id, projectID, userID int64) (File, error)
 	Update(ctx context.Context, userID int64, req UpdateRequest) (File, error)
 	Delete(ctx context.Context, id, projectID, userID int64) error
+	DeleteByProject(ctx context.Context, projectID, userID int64) error
 }
 
 type CreateRequest struct {
@@ -157,6 +158,30 @@ func (s *service) Delete(ctx context.Context, id, projectID, userID int64) error
 	err = s.repo.Delete(ctx, id, projectID, userID)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *service) DeleteByProject(ctx context.Context, projectID, userID int64) error {
+	files, err := s.repo.ListByProject(ctx, projectID, userID)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		if f.S3Key == "" {
+			continue
+		}
+		if err := s.storage.Delete(ctx, f.S3Key); err != nil {
+			return err
+		}
+	}
+
+	for _, f := range files {
+		if err := s.repo.Delete(ctx, f.ID, projectID, userID); err != nil {
+			return err
+		}
 	}
 
 	return nil

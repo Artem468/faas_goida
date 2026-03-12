@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,15 +12,20 @@ import (
 )
 
 type Handler struct {
-	repo Repository
+	repo  Repository
+	files FileCleaner
 }
 
 type createOrUpdateRequest struct {
 	Name string `json:"name"`
 }
 
-func NewHandler(repo Repository) *Handler {
-	return &Handler{repo: repo}
+type FileCleaner interface {
+	DeleteByProject(ctx context.Context, projectID, userID int64) error
+}
+
+func NewHandler(repo Repository, files FileCleaner) *Handler {
+	return &Handler{repo: repo, files: files}
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -158,6 +164,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
+	}
+
+	if h.files != nil {
+		if err := h.files.DeleteByProject(r.Context(), id, userID); err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	err := h.repo.Delete(r.Context(), id, userID)
