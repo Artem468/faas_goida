@@ -20,7 +20,6 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 
 COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/calculator.goida .
 
 RUN chmod +x ./main ./bin/goida_lang
 

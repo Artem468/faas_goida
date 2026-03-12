@@ -109,8 +109,7 @@ func (h *Handler) Call(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("goida_lang finished successfully")
-	if _, err := fmt.Fprintf(w, "Result:\n%s", string(output)); err != nil {
+	if _, err := fmt.Fprintf(w, "%s", string(output)); err != nil {
 		log.Fatal(err)
 	}
 }

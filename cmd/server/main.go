@@ -69,7 +69,7 @@ func main() {
 	log.Printf("Server listening on %s", port)
 
 	mux := http.NewServeMux()
-	mux.Handle("/call", authService.AuthMiddleware(http.HandlerFunc(execHandler.Call)))
+	mux.Handle("POST /call", authService.AuthMiddleware(http.HandlerFunc(execHandler.Call)))
 
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
